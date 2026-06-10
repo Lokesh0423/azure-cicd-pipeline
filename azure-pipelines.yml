@@ -1,0 +1,151 @@
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+  paths:
+    include:
+      - app/**
+      - k8s/**
+
+pr:
+  branches:
+    include:
+      - main
+
+variables:
+  ACR_NAME: 'youracrname'
+  AKS_CLUSTER: 'your-aks-cluster'
+  AKS_RESOURCE_GROUP: 'your-resource-group'
+  IMAGE_NAME: 'nodejs-aks-pipeline'
+  IMAGE_TAG: '$(Build.BuildId)'
+
+stages:
+
+# ─── STAGE 1: BUILD & TEST ───────────────────────────────────────────────────
+- stage: Build
+  displayName: 'Build and Test'
+  jobs:
+    - job: BuildTest
+      displayName: 'Build, Test & Push Image'
+      pool:
+        vmImage: 'ubuntu-latest'
+      steps:
+        - task: NodeTool@0
+          inputs:
+            versionSpec: '18.x'
+          displayName: 'Install Node.js'
+
+        - script: |
+            cd app
+            npm ci
+            npm test
+          displayName: 'Install dependencies and run tests'
+
+        - task: PublishTestResults@2
+          inputs:
+            testResultsFormat: 'JUnit'
+            testResultsFiles: '**/test-results.xml'
+          condition: succeededOrFailed()
+          displayName: 'Publish test results'
+
+        - task: Docker@2
+          displayName: 'Build Docker image'
+          inputs:
+            command: build
+            repository: '$(ACR_NAME).azurecr.io/$(IMAGE_NAME)'
+            dockerfile: 'app/Dockerfile'
+            tags: |
+              $(IMAGE_TAG)
+              latest
+
+        - task: AzureCLI@2
+          displayName: 'Push image to ACR'
+          inputs:
+            azureSubscription: 'Azure-Service-Connection'
+            scriptType: bash
+            scriptLocation: inlineScript
+            inlineScript: |
+              az acr login --name $(ACR_NAME)
+              docker push $(ACR_NAME).azurecr.io/$(IMAGE_NAME):$(IMAGE_TAG)
+              docker push $(ACR_NAME).azurecr.io/$(IMAGE_NAME):latest
+
+# ─── STAGE 2: DEPLOY TO STAGING ──────────────────────────────────────────────
+- stage: DeployStaging
+  displayName: 'Deploy to Staging'
+  dependsOn: Build
+  condition: succeeded()
+  jobs:
+    - deployment: DeployStaging
+      displayName: 'Deploy to AKS Staging'
+      environment: 'staging'
+      pool:
+        vmImage: 'ubuntu-latest'
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+              - task: AzureCLI@2
+                displayName: 'Get AKS credentials'
+                inputs:
+                  azureSubscription: 'Azure-Service-Connection'
+                  scriptType: bash
+                  scriptLocation: inlineScript
+                  inlineScript: |
+                    az aks get-credentials \
+                      --resource-group $(AKS_RESOURCE_GROUP) \
+                      --name $(AKS_CLUSTER) \
+                      --overwrite-existing
+
+              - script: |
+                  sed -i 's/$(ACR_NAME)/'"$(ACR_NAME)"'/g' k8s/deployment.yaml
+                  sed -i 's/$(IMAGE_TAG)/'"$(IMAGE_TAG)"'/g' k8s/deployment.yaml
+                  kubectl apply -f k8s/deployment.yaml -n staging
+                  kubectl apply -f k8s/service.yaml -n staging
+                  kubectl rollout status deployment/nodejs-aks-pipeline -n staging --timeout=120s
+                displayName: 'Deploy to staging namespace'
+
+# ─── STAGE 3: DEPLOY TO PRODUCTION ───────────────────────────────────────────
+- stage: DeployProduction
+  displayName: 'Deploy to Production'
+  dependsOn: DeployStaging
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+  jobs:
+    - deployment: DeployProduction
+      displayName: 'Deploy to AKS Production'
+      environment: 'production'
+      pool:
+        vmImage: 'ubuntu-latest'
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+              - task: AzureCLI@2
+                displayName: 'Get AKS credentials'
+                inputs:
+                  azureSubscription: 'Azure-Service-Connection'
+                  scriptType: bash
+                  scriptLocation: inlineScript
+                  inlineScript: |
+                    az aks get-credentials \
+                      --resource-group $(AKS_RESOURCE_GROUP) \
+                      --name $(AKS_CLUSTER) \
+                      --overwrite-existing
+
+              - script: |
+                  sed -i 's/$(ACR_NAME)/'"$(ACR_NAME)"'/g' k8s/deployment.yaml
+                  sed -i 's/$(IMAGE_TAG)/'"$(IMAGE_TAG)"'/g' k8s/deployment.yaml
+                  kubectl apply -f k8s/deployment.yaml -n production
+                  kubectl apply -f k8s/service.yaml -n production
+                  kubectl rollout status deployment/nodejs-aks-pipeline -n production --timeout=180s
+                displayName: 'Deploy to production namespace'
+
+              - task: AzureCLI@2
+                displayName: 'Verify deployment health'
+                inputs:
+                  azureSubscription: 'Azure-Service-Connection'
+                  scriptType: bash
+                  scriptLocation: inlineScript
+                  inlineScript: |
+                    kubectl get pods -n production -l app=nodejs-aks-pipeline
+                    kubectl get svc nodejs-aks-pipeline-svc -n production

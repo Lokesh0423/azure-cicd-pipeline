@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nodejs-aks-pipeline
+  labels:
+    app: nodejs-aks-pipeline
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nodejs-aks-pipeline
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: nodejs-aks-pipeline
+    spec:
+      containers:
+        - name: nodejs-aks-pipeline
+          image: $(ACR_NAME).azurecr.io/nodejs-aks-pipeline:$(IMAGE_TAG)
+          ports:
+            - containerPort: 3000
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: APP_VERSION
+              value: "$(IMAGE_TAG)"
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "250m"
+              memory: "256Mi"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
