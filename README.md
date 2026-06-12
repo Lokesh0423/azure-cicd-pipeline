@@ -106,4 +106,3 @@ azure-cicd-pipeline/
 ## Related
 
 - [terraform-azure-infra](https://github.com/Lokesh0423/terraform-azure-infra) — AKS, VNet, ACR, Azure Monitor modules
-- `k8s-helm-charts` *(coming soon)* — Helm charts for parameterized deployments
