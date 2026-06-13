@@ -71,9 +71,9 @@ azure-cicd-pipeline/
 
 3. **Update pipeline variables** in `azure-pipelines.yml`:
    ```yaml
-   ACR_NAME: 'youracrname'
-   AKS_CLUSTER: 'your-aks-cluster'
-   AKS_RESOURCE_GROUP: 'your-resource-group'
+   ACR_NAME: 'lokesh0423acr'
+AKS_CLUSTER: 'your-aks-cluster'
+AKS_RESOURCE_GROUP: 'rg-devops-portfolio'
    ```
 
 4. **Create namespaces** in AKS:
