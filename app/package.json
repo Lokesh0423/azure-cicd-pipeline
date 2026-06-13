@@ -1,0 +1,13 @@
+{
+  "name": "nodejs-cicd-pipeline",
+  "version": "1.0.0",
+  "description": "Node.js app for Azure CI/CD demo",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
