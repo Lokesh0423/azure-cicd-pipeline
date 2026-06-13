@@ -47,6 +47,8 @@ azure-cicd-pipeline/
 │   └── service.yaml         # LoadBalancer service
 ├── .azure-pipelines/
 │   └── azure-pipelines.yml  # 3-stage pipeline: Build → Staging → Production
+├── docs/
+│   └── screenshots/         # Pipeline run evidence (ACR push, AKS deploy)
 ├── terraform/
 │   └── README.md            # Links to terraform-azure-infra repo
 └── README.md
@@ -84,25 +86,18 @@ azure-cicd-pipeline/
 
 ## Key Features
 
-- **Multi-stage build** — Docker image with non-root user for security
-- **Rolling updates** — zero-downtime deployments on AKS
-- **Health checks** — liveness and readiness probes on `/health`
+- **Multi-stage Docker build** — Separate builder and runtime stages; non-root user for container security
+- **Rolling updates** — Zero-downtime deployments with `maxUnavailable: 0` on AKS
+- **Health checks** — Liveness and readiness probes configured on `/health` endpoint
 - **Resource limits** — CPU and memory constraints defined per pod
-- **Branch strategy** — `develop` deploys to staging, `main` deploys to production
-- **End-to-end infra** — pairs with [terraform-azure-infra](https://github.com/Lokesh0423/terraform-azure-infra) for full IaC story
+- **Branch strategy** — `develop` deploys to staging; `main` promotes to production
+- **End-to-end IaC** — Pairs with [terraform-azure-infra](https://github.com/Lokesh0423/terraform-azure-infra) for full infrastructure-as-code coverage
 
+## Pipeline Evidence
 
-
-**Multi-stage Docker builds** — Separating the builder and runtime stages keeps the final image lean and clean. Adding a non-root user felt like a small thing but it's the kind of security detail that matters in production.
-
-**Kubernetes probes** — Liveness vs readiness took me a while to really get. Liveness restarts a broken container. Readiness stops traffic going to a container that isn't ready yet. Both matter, they're not the same thing.
-
-**Branch strategy** — Tying `develop` to staging and `main` to production makes the pipeline self-documenting. The branch name tells you exactly where your code is going.
-
-**Rolling updates** — Setting `maxUnavailable: 0` means zero downtime during deploys. Learned this the hard way understanding what happens when you don't set it.
-
-**ACR + AKS connection** — The service connection in Azure DevOps is the glue between the pipeline and the cloud. Getting that auth flow right was the most fiddly part of the whole setup.
+> Screenshots of successful pipeline runs, ACR image pushes, and AKS deployments are available in [`/docs/screenshots`](./docs/screenshots).
 
 ## Related
 
 - [terraform-azure-infra](https://github.com/Lokesh0423/terraform-azure-infra) — AKS, VNet, ACR, Azure Monitor modules
+- `k8s-helm-charts` *(in progress)* — Helm charts for parameterized deployments
