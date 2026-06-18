@@ -100,4 +100,4 @@ AKS_RESOURCE_GROUP: 'rg-devops-portfolio'
 ## Related
 
 - [terraform-azure-infra](https://github.com/Lokesh0423/terraform-azure-infra) — AKS, VNet, ACR, Azure Monitor modules
-- `k8s-helm-charts` *(in progress)* — Helm charts for parameterized deployments
+- `k8s-helm-charts` *(in progress)* — Helm charts for parameterized deployment. 
