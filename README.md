@@ -19,7 +19,7 @@ Code Push
            │  (main branch only)
            ▼
 ┌──────────────────────┐
-│ Stage 3: Production  │  → Deploy to AKS (production namespace) → Health check
+│ Stage 3: Production  │  → Deploy to AKS (production namespace) → Health checks
 └──────────────────────┘
 ```
 
