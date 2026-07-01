@@ -82,16 +82,16 @@ AKS_RESOURCE_GROUP: 'rg-devops-portfolio'
    kubectl create namespace production
    ```
 
-5. **Run the pipeline** — push to `develop` triggers Build + Staging. Push to `main` triggers all 3 stages including Production.
+5. **Run the pipeline**: push to `develop` triggers Build + Staging. Push to `main` triggers all 3 stages including Production.
 
 ## Key Features
 
-- **Multi-stage Docker build** — Separate builder and runtime stages; non-root user for container security
-- **Rolling updates** — Zero-downtime deployments with `maxUnavailable: 0` on AKS
-- **Health checks** — Liveness and readiness probes configured on `/health` endpoint
-- **Resource limits** — CPU and memory constraints defined per pod
-- **Branch strategy** — `develop` deploys to staging; `main` promotes to production
-- **End-to-end IaC** — Pairs with [terraform-azure-infra](https://github.com/Lokesh0423/terraform-azure-infra) for full infrastructure-as-code coverage
+- **Multi-stage Docker build**: Separate builder and runtime stages; non-root user for container security
+- **Rolling updates**: Zero-downtime deployments with `maxUnavailable: 0` on AKS
+- **Health checks**: Liveness and readiness probes configured on `/health` endpoint
+- **Resource limits**: CPU and memory constraints defined per pod
+- **Branch strategy**: `develop` deploys to staging; `main` promotes to production
+- **End-to-end IaC**: Pairs with [terraform-azure-infra](https://github.com/Lokesh0423/terraform-azure-infra) for full infrastructure-as-code coverage
 
 ## Pipeline Evidence
 
@@ -99,5 +99,5 @@ AKS_RESOURCE_GROUP: 'rg-devops-portfolio'
 
 ## Related
 
-- [terraform-azure-infra](https://github.com/Lokesh0423/terraform-azure-infra) — AKS, VNet, ACR, Azure Monitor modules
-- `k8s-helm-charts` *(in progress)* — Helm charts for parameterized deployment. 
+- [terraform-azure-infra](https://github.com/Lokesh0423/terraform-azure-infra): AKS, VNet, ACR, Azure Monitor modules
+- [secure-gitops-platform](https://github.com/Lokesh0423/secure-gitops-platform): production GitOps platform with parameterized Helm charts, ArgoCD, and Trivy security scanning. 
